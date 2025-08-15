@@ -119,38 +119,36 @@ def match_vision_to_track(v_ego: float, lead: capnp._DynamicStructReader, tracks
 
     return prob_d * prob_y * prob_v * weight_v
 
-  #track = max(tracks.values(), key=prob, default=None)
-  #return track if track and prob(track) > -1e6 else None
-  best_track = None
-  best_score = -1e6
+  best_track, best_score = None, -1e6
   for c in tracks.values():
     score = prob(c)
     if score > best_score:
-      best_score = score
-      best_track = c
+      best_track, best_score = c, score
 
-  if best_track is not None and offset_vision_dist - best_track.dRel > max_offset_vision_dist: 
+  if best_track is None:
+    pass
+  elif offset_vision_dist - best_track.dRel > max_offset_vision_dist: 
     best_track = None
-
-  #if best_track is not None and lead.v[0] - best_track.vLead > max_offset_vision_vel:
-  #  best_track = None
-
-  if best_track is not None and abs(best_track.yRel + best_track.yvLead_filtered * radar_lat_factor + lead.y[0]) > 3.0: # lead.y[0]는 반대..
+  elif abs(best_track.yRel + best_track.yvLead_filtered * radar_lat_factor + lead.y[0]) > 3.0: # lead.y[0]는 반대..
     best_track = None
-
-  if best_track is not None:
-
-    if lead.v[0] - best_track.vLead > max_offset_vision_vel:
+  elif best_score < 1e-4 and lead.prob < 0.5:
+    print(f"score = {best_score:.5f}")
+    best_track = None
+  elif lead.v[0] - best_track.vLead < max_offset_vision_vel:
+    pass
+  elif best_track.selected_count < 1:
+    if abs(best_track.vLead) < 3.0:
       best_track.is_stopped_car_count += 1
-      # 직전에 사용되었던것이라면 재사용, 2초간 유지된다면 정지차로 간주.
-      if best_track.selected_count < 1 and best_track.is_stopped_car_count < int(2.0/DT_MDL):
+      if best_track.is_stopped_car_count < int(2.0/DT_MDL):
         best_track = None
-
-    if best_track is not None:
-      best_track.selected_count += 1
+    else:
+      best_track.is_stopped_car_count = max(0, best_track.is_stopped_car_count - 1)
+      best_track = None
 
   for c in tracks.values():
-    if c is not best_track:
+    if c is best_track:
+      best_track.selected_count += 1
+    else:
       c.selected_count = 0
       
   return best_track
@@ -260,7 +258,7 @@ def get_lead_side(v_ego, tracks, md, lane_width, model_v_ego, radar_lat_factor =
 def get_lead(v_ego: float, ready: bool, tracks: dict[int, Track], lead_msg: capnp._DynamicStructReader,
              model_v_ego: float, low_speed_override: bool = True) -> dict[str, Any]:
   # Determine leads, this is where the essential logic happens
-  if len(tracks) > 0 and ready and lead_msg.prob > .5:
+  if len(tracks) > 0 and ready and lead_msg.prob > .2:
     track = match_vision_to_track(v_ego, lead_msg, tracks)
   else:
     track = None
@@ -531,7 +529,7 @@ class RadarD:
       track_scc = tracks.get(1)
 
     # Determine leads, this is where the essential logic happens
-    if len(tracks) > 0 and ready and lead_msg.prob > .5:
+    if len(tracks) > 0 and ready and lead_msg.prob > .2:
       track = match_vision_to_track(v_ego, lead_msg, tracks, self.radar_lat_factor)
     else:
       track = None
