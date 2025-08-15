@@ -135,7 +135,7 @@ def match_vision_to_track(v_ego: float, lead: capnp._DynamicStructReader, tracks
     print(f"score = {best_score:.5f}")
     best_track = None
   elif lead.v[0] - best_track.vLead < max_offset_vision_vel:
-    pass
+    best_track.is_stopped_car_count = max(0, best_track.is_stopped_car_count - 1)
   elif best_track.selected_count < 1:
     if abs(best_track.vLead) < 3.0:
       best_track.is_stopped_car_count += 1
