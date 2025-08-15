@@ -1976,10 +1976,11 @@ class CarrotServ:
       if self.szPosRoadName == "null":
         self.szPosRoadName = ""
 
-      self.vpPosPointLatNavi = float(json.get("vpPosPointLat", self.vpPosPointLatNavi))
-      self.vpPosPointLonNavi = float(json.get("vpPosPointLon", self.vpPosPointLonNavi))
-      self.last_update_gps_time_navi = self.last_calculate_gps_time = now
-      self.nPosAngle = float(json.get("nPosAngle", self.nPosAngle))
+      self.vpPosPointLatNavi = float(json.get("vpPosPointLat", 0.0))
+      self.vpPosPointLonNavi = float(json.get("vpPosPointLon", 0.0))
+      if self.vpPosPointLatNavi != 0.0:
+        self.last_update_gps_time_navi = self.last_calculate_gps_time = now
+        self.nPosAngle = float(json.get("nPosAngle", self.nPosAngle))
 
       self.nPosSpeed = float(json.get("nPosSpeed", self.nPosSpeed))
       self._update_tbt()
