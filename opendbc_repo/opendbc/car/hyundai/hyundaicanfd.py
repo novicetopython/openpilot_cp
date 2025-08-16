@@ -575,6 +575,16 @@ def create_ccnc_messages(CP, packer, CAN, frame, CC, CS, hud_control, disp_angle
           values['RF_DETECT'] = 3 if hud_control.leadRightDist > 30 else 4
           values['RF_DETECT_DISTANCE'] = hud_control.leadRightDist
           values['RF_DETECT_LATERAL'] = hud_control.leadRightLat
+        """
+        if values['LR_DETECT'] == 0 and hud_control.leadLeftDist2 > 0:
+          values['LR_DETECT'] = 4
+          values['LR_DETECT_DISTANCE'] = 2
+          values['LR_DETECT_LATERAL'] = hud_control.leadLeftLat2
+        if values['RR_DETECT'] == 0 and hud_control.leadRightDist2 > 0:
+          values['RR_DETECT'] = 4
+          values['RR_DETECT_DISTANCE'] = 2
+          values['RR_DETECT_LATERAL'] = hud_control.leadRightLat2
+        """
         ret.append(packer.make_can_msg("ADRV_0x1ea", CAN.ECAN, values))
 
       if CS.adrv_info_162 is not None:
@@ -596,6 +606,14 @@ def create_ccnc_messages(CP, packer, CAN, frame, CC, CS, hud_control, disp_angle
             values['RF_DETECT'] = 3 if hud_control.leadRightDist > 30 else 4
             values['RF_DETECT_DISTANCE'] = hud_control.leadRightDist
             values['RF_DETECT_LATERAL'] = hud_control.leadRightLat
+          if values['LR_DETECT'] == 0 and hud_control.leadLeftDist2 > 0:
+            values['LR_DETECT'] = 4
+            values['LR_DETECT_DISTANCE'] = 2
+            values['LR_DETECT_LATERAL'] = hud_control.leadLeftLat2
+          if values['RR_DETECT'] == 0 and hud_control.leadRightDist2 > 0:
+            values['RR_DETECT'] = 4
+            values['RR_DETECT_DISTANCE'] = 2
+            values['RR_DETECT_LATERAL'] = hud_control.leadRightLat2
         else:
           sensors = [
             ('lf', 'LF_DETECT'),
