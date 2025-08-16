@@ -137,7 +137,7 @@ def match_vision_to_track(v_ego: float, lead: capnp._DynamicStructReader, tracks
   elif lead.v[0] - best_track.vLead < max_offset_vision_vel:
     best_track.is_stopped_car_count = max(0, best_track.is_stopped_car_count - 1)
   elif best_track.selected_count < 1:
-    if abs(best_track.vLead) < 3.0:
+    if abs(best_track.vLead) < 3.0 and lead.prob < 0.9: # 0.9보다 높은데도 여기 if까지 왔다면, 잘못된 속도 레이더데이터임.
       best_track.is_stopped_car_count += 1
       if best_track.is_stopped_car_count < int(2.0/DT_MDL):
         best_track = None
