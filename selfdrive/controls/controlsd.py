@@ -199,16 +199,15 @@ class Controls:
       if road_edge <= 2.0 or not leads2:
         st["main"] = {"dRel": None, "lat": None}
         st["sub"]  = {"dRel": None, "lat": None}
-        return
+        if not bsd_state:
+          return
 
-      lead_main = leads2[0]
+      lead_main = leads2[0] if len(leads2) > 0 else None
       side_cap = side.capitalize()
 
       if bsd_state:
-        st["sub"]["dRel"] = ema(st["sub"]["dRel"], 1)
-        st["sub"]["lat"]  = ema(st["sub"]["lat"],  3.2)
-        set_hud(side_cap, "Dist2", st["sub"]["dRel"])
-        set_hud(side_cap, "Lat2",  st["sub"]["lat"])
+        set_hud(side_cap, "Dist2", 1)
+        set_hud(side_cap, "Lat2",  3.2)
       # 첫 번째가 10m 이내라면 sub 업데이트 + 두 번째를 main으로
       elif len(leads2) > 1 and lead_main.dRel < 10:
         st["sub"]["dRel"] = ema(st["sub"]["dRel"], lead_main.dRel)
@@ -217,10 +216,11 @@ class Controls:
         set_hud(side_cap, "Lat2",  st["sub"]["lat"])
         lead_main = leads2[1]
 
-      st["main"]["dRel"] = ema(st["main"]["dRel"], lead_main.dRel)
-      st["main"]["lat"]  = ema(st["main"]["lat"],  abs(lead_main.dPath))
-      set_hud(side_cap, "Dist", st["main"]["dRel"])
-      set_hud(side_cap, "Lat",  st["main"]["lat"])
+      if len(leads2) > 0:
+        st["main"]["dRel"] = ema(st["main"]["dRel"], lead_main.dRel)
+        st["main"]["lat"]  = ema(st["main"]["lat"],  abs(lead_main.dPath))
+        set_hud(side_cap, "Dist", st["main"]["dRel"])
+        set_hud(side_cap, "Lat",  st["main"]["lat"])
 
   def publish(self, CC, lac_log):
     CS = self.sm['carState']
