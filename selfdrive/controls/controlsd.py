@@ -208,7 +208,7 @@ class Controls:
         st["sub"]["dRel"] = ema(st["sub"]["dRel"], 1)
         st["sub"]["lat"]  = ema(st["sub"]["lat"],  3.2)
         set_hud(side_cap, "Dist2", st["sub"]["dRel"])
-        set_hud(side_cap, "Lat2",  3.0)
+        set_hud(side_cap, "Lat2",  st["sub"]["lat"])
       # 첫 번째가 10m 이내라면 sub 업데이트 + 두 번째를 main으로
       elif len(leads2) > 1 and lead_main.dRel < 10:
         st["sub"]["dRel"] = ema(st["sub"]["dRel"], lead_main.dRel)
