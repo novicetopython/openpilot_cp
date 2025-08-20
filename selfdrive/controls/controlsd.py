@@ -207,7 +207,7 @@ class Controls:
 
       if bsd_state:
         set_hud(side_cap, "Dist2", 1)
-        set_hud(side_cap, "Lat2",  3.2)
+        set_hud(side_cap, "Lat2",  2.5)
       # 첫 번째가 10m 이내라면 sub 업데이트 + 두 번째를 main으로
       elif len(leads2) > 1 and lead_main.dRel < 10:
         st["sub"]["dRel"] = ema(st["sub"]["dRel"], lead_main.dRel)
