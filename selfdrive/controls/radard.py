@@ -105,7 +105,7 @@ def laplacian_pdf(x: float, mu: float, b: float):
   diff = abs(x - mu) / max(b, 1e-4)
   return 0.0 if diff > 50.0 else math.exp(-diff)
 
-def match_vision_to_track(v_ego: float, lead: capnp._DynamicStructReader, tracks: dict[int, Track], radar_lat_factor = 0.0):
+def match_vision_to_track(v_ego: float, lead: capnp._DynamicStructReader, tracks: dict[int, Track]):
   offset_vision_dist = lead.x[0] - RADAR_TO_CAMERA
   #vel_tolerance = 25.0 if lead.prob > 0.99 else 10.0
   max_offset_vision_dist = max(offset_vision_dist * 0.35, 5.0)
@@ -113,7 +113,7 @@ def match_vision_to_track(v_ego: float, lead: capnp._DynamicStructReader, tracks
 
   def prob(c):
     prob_d = laplacian_pdf(c.dRel, offset_vision_dist, lead.xStd[0])
-    prob_y = laplacian_pdf(c.yRel + c.yvLead_filtered * radar_lat_factor, -lead.y[0], lead.yStd[0])
+    prob_y = laplacian_pdf(c.yRel, -lead.y[0], lead.yStd[0])
     prob_v = laplacian_pdf(c.vLead, lead.v[0], lead.vStd[0])
 
     weight_v = np.interp(c.vLead, [0, 10], [0.3, 1])
@@ -403,7 +403,7 @@ class RadarD:
 
     # Determine leads, this is where the essential logic happens
     if len(tracks) > 0 and ready and lead_msg.prob > .2:
-      track = match_vision_to_track(v_ego, lead_msg, tracks, self.radar_lat_factor)
+      track = match_vision_to_track(v_ego, lead_msg, tracks)
     else:
       track = None
 
