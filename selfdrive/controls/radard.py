@@ -468,7 +468,8 @@ class RadarD:
         right_list.append(ld)
 
       # cut-in
-      if abs(dy) < 3.4 / 2 and (4 < c.dRel < 20 and c.vLead > 4 and c.cnt > int(2.0/DT_MDL) and  dy * c.yvLead_filtered < 0):
+      cut_in_width = 2.6 #3.4  # 끼어들기 차폭
+      if abs(dy) < cut_in_width / 2 and (4 < c.dRel < 20 and c.vLead > 4 and c.cnt > int(2.0/DT_MDL) and  dy * c.yvLead_filtered < 0):
         if not self.leadCutIn['status'] or c.dRel < self.leadCutIn['dRel']:
           self.leadCutIn = c.get_RadarState(lead_msg.prob)
 
