@@ -143,8 +143,11 @@ def match_vision_to_track_carrot(v_ego: float, lead: capnp._DynamicStructReader,
         best_track = None
       
     if best_track is None:
-      _, best_track = max(candidates, key=lambda pc: pc[0])
-      if lead.v[0] - best_track.vLead > max_offset_vision_vel:
+      best_score, best_track = max(candidates, key=lambda pc: pc[0])
+      if best_score < 0.006:
+        print("best_score2 = ", best_score)
+        best_track = None
+      elif lead.v[0] - best_track.vLead > max_offset_vision_vel:
         best_track.is_stopped_car_count += 1
         if best_track.is_stopped_car_count < int(2.0/DT_MDL):
           best_track = None
