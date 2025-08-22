@@ -111,7 +111,7 @@ def match_vision_to_track_carrot(v_ego: float, lead: capnp._DynamicStructReader,
   max_vision_dist = max(offset_vision_dist * 1.25, 5.0)
   min_vision_dist = max(offset_vision_dist * 0.6, 1.0)
   max_offset_vision_vel = max(lead.v[0] * np.interp(lead.prob, [0.8, 0.98], [0.3, 0.5]), 5.0) # 확률이 낮으면 속도오차를 줄임.
-  y_gate = max(3.0, lead.yStd[0] * 3.0)
+  y_gate = max(1.5, lead.yStd[0] * 3.0)
 
   def prob(c):
     prob_d = laplacian_pdf(c.dRel, offset_vision_dist, lead.xStd[0])
@@ -136,7 +136,8 @@ def match_vision_to_track_carrot(v_ego: float, lead: capnp._DynamicStructReader,
   else:
     preferred = [(p, c) for p, c in candidates if c.vLead >= min_vLead]
     if preferred:
-      _, best_track = min(preferred, key=lambda pc: (pc[1].dRel, -pc[0]))    
+      #_, best_track = min(preferred, key=lambda pc: (pc[1].dRel, -pc[0]))
+      _, best_track = max(preferred, key=lambda pc: pc[0])
     else:
       _, best_track = max(candidates, key=lambda pc: pc[0])
       if lead.v[0] - best_track.vLead > max_offset_vision_vel:
