@@ -124,7 +124,7 @@ def match_vision_to_track_carrot(v_ego: float, lead: capnp._DynamicStructReader,
   vel_sane = (abs(best_track.vLead - lead.v[0]) < 10) or (best_track.vLead > 3)
 
   y_gate = max(1.5, lead.yStd[0] * 3.0)
-  y_sane = abs(c.yRel + lead.y[0]) < y_gate
+  y_sane = abs(best_track.yRel + lead.y[0]) < y_gate
 
   if dist_sane:
     if not vel_sane:
