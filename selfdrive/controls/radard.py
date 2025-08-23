@@ -111,46 +111,26 @@ def match_vision_to_track_carrot(v_ego: float, lead: capnp._DynamicStructReader,
   max_vision_dist = max(offset_vision_dist * 1.25, 5.0)
   min_vision_dist = max(offset_vision_dist * 0.6, 1.0)
   max_offset_vision_vel = max(lead.v[0] * np.interp(lead.prob, [0.8, 0.98], [0.3, 0.5]), 5.0) # 확률이 낮으면 속도오차를 줄임.
-  y_gate = max(1.5, lead.yStd[0] * 3.0)
 
   def prob(c):
     prob_d = laplacian_pdf(c.dRel, offset_vision_dist, lead.xStd[0])
     prob_y = laplacian_pdf(c.yRel, -lead.y[0], lead.yStd[0])
+    prob_v = laplacian_pdf(c.vLead, lead.v[0], lead.vStd[0])
 
-    return prob_d * prob_y
+    return prob_d * prob_y * prob_v
 
-  min_vLead = 3.0
-  candidates = []
-  best_track = None
-  for c in tracks.values():
-    if not (min_vision_dist < c.dRel < max_vision_dist):
-      continue
-    if abs(c.yRel + lead.y[0]) > y_gate:
-      continue
-    if c.selected_count > 0:
-      best_track = c
-    candidates.append((prob(c), c))
-    
-  if not candidates:
-    best_track = None
-  else:
-    preferred = [(p, c) for p, c in candidates if c.vLead >= min_vLead]
-    if preferred:
-      #_, best_track = min(preferred, key=lambda pc: (pc[1].dRel, -pc[0]))
-      best_score, best_track = max(preferred, key=lambda pc: pc[0])
-      if best_score < 0.006:
-        print("best_score = ", best_score)
-        best_track = None
-      
-    if best_track is None:
-      best_score, best_track = max(candidates, key=lambda pc: pc[0])
-      if best_score < 0.006:
-        print("best_score2 = ", best_score)
-        best_track = None
-      elif lead.v[0] - best_track.vLead > max_offset_vision_vel:
+  best_track = max(tracks.values(), key=prob)
+  dist_sane = min_vision_dist < best_track.dRel < max_vision_dist #abs(best_track.dRel - offset_vision_dist) < max([(offset_vision_dist)*.35, 5.0])
+  vel_sane = (abs(best_track.vLead - lead.v[0]) < 10) or (best_track.vLead > 3)
+
+  if dist_sane:
+    if not vel_sane:
+      if best_track.selected_count < 1:
         best_track.is_stopped_car_count += 1
         if best_track.is_stopped_car_count < int(2.0/DT_MDL):
           best_track = None
+  else:
+    best_track = None
 
   for c in tracks.values():
     if c is best_track:
