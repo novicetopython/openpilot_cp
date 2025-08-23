@@ -123,11 +123,18 @@ def match_vision_to_track_carrot(v_ego: float, lead: capnp._DynamicStructReader,
   dist_sane = min_vision_dist < best_track.dRel < max_vision_dist #abs(best_track.dRel - offset_vision_dist) < max([(offset_vision_dist)*.35, 5.0])
   vel_sane = (abs(best_track.vLead - lead.v[0]) < 10) or (best_track.vLead > 3)
 
+  y_gate = max(1.5, lead.yStd[0] * 3.0)
+  y_sane = abs(c.yRel + lead.y[0]) < y_gate
+
   if dist_sane:
     if not vel_sane:
       if best_track.selected_count < 1:
-        best_track.is_stopped_car_count += 1
-        if best_track.is_stopped_car_count < int(2.0/DT_MDL):
+        if y_sane:
+          best_track.is_stopped_car_count += 1
+          if best_track.is_stopped_car_count < int(2.0/DT_MDL):
+            best_track = None
+        else:
+          best_track.is_stopped_car_count = max(0, best_track.is_stopped_car_count - 1)
           best_track = None
   else:
     best_track = None
