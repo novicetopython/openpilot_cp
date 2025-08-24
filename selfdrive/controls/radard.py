@@ -57,8 +57,8 @@ class Track:
       self.yRel_filtered = self.yRel
       self.yvLead_filtered = self.yvLead
     else:
-      self.yRel_filtered = self.yRel_filtered * 0.95 + self.yRel * 0.05
-      self.yvLead_filtered = self.yvLead_filtered * 0.95 + self.yvLead * 0.05
+      self.yRel_filtered = self.yRel_filtered * 0.9 + self.yRel * 0.1
+      self.yvLead_filtered = self.yvLead_filtered * 0.9 + self.yvLead * 0.1
 
     a_lead_threshold = 0.5 * radar_reaction_factor
     if abs(self.aLead) < a_lead_threshold and abs(self.jLead) < 0.5:
@@ -117,13 +117,30 @@ def match_vision_to_track_carrot(v_ego: float, lead: capnp._DynamicStructReader,
     prob_y = laplacian_pdf(c.yRel, -lead.y[0], lead.yStd[0])
     prob_v = laplacian_pdf(c.vLead, lead.v[0], lead.vStd[0])
 
-    return prob_d * prob_y * prob_v
+    weight_v = np.interp(c.vLead, [0, 10], [0.3, 1])
+
+    return prob_d * prob_y * prob_v * weight_v
 
   best_track = max(tracks.values(), key=prob)
+
+
+  # 끼어드는차량을 간헐적 멀리있는 차량으로 검출하는 문제가 있음..
+  y_gate  = max(1.5,  lead.yStd[0] * 2.0)
+  v_gate  = max(5.0,  lead.vStd[0] * 2.0)
+
+  yv_candidates = [
+    c for c in tracks.values()
+    if (min_vision_dist < c.dRel < max_vision_dist)
+       and (abs(c.yRel + lead.y[0]) < y_gate)
+       and (abs(c.vLead - lead.v[0]) < v_gate)
+  ]
+
+  if False and yv_candidates:
+    best_track = min(yv_candidates, key=lambda c: c.dRel)
+
   dist_sane = min_vision_dist < best_track.dRel < max_vision_dist #abs(best_track.dRel - offset_vision_dist) < max([(offset_vision_dist)*.35, 5.0])
   vel_sane = (abs(best_track.vLead - lead.v[0]) < 10) or (best_track.vLead > 3)
 
-  y_gate = max(1.5, lead.yStd[0] * 3.0)
   y_sane = abs(best_track.yRel + lead.y[0]) < y_gate
 
   if dist_sane:
@@ -456,11 +473,8 @@ class RadarD:
       track_scc = tracks.get(1)
 
     # Determine leads, this is where the essential logic happens
-    if len(tracks) > 0 and ready and lead_msg.prob > .2:
-      if self.enable_radar_tracks == 3:
-        track = match_vision_to_track_carrot(v_ego, lead_msg, tracks, self.radar_lat_factor)
-      else:
-        track = match_vision_to_track(v_ego, lead_msg, tracks, self.radar_lat_factor)
+    if len(tracks) > 0 and ready and lead_msg.prob > .3:
+      track = match_vision_to_track(v_ego, lead_msg, tracks, self.radar_lat_factor)
     else:
       track = None
 
@@ -526,7 +540,7 @@ class RadarD:
 
       # cut-in
       cut_in_width = 2.6 #3.4  # 끼어들기 차폭
-      if abs(dy) < cut_in_width / 2 and (4 < c.dRel < 20 and c.vLead > 4 and c.cnt > int(2.0/DT_MDL) and  dy * c.yvLead_filtered < 0):
+      if abs(dy) < cut_in_width / 2 and (3 < c.dRel < 20 and c.vLead > 4 and c.cnt > int(2.0/DT_MDL) and  dy * c.yvLead_filtered < 0):
         if not self.leadCutIn['status'] or c.dRel < self.leadCutIn['dRel']:
           self.leadCutIn = c.get_RadarState(lead_msg.prob)
 
