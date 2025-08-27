@@ -35,6 +35,7 @@ class Track:
 
     self.is_stopped_car_count = 0
     self.selected_count = 0
+    self.cut_in_count = 0
 
   def update(self, md, pt, ready, radar_reaction_factor):
 
@@ -540,11 +541,17 @@ class RadarD:
         right_list.append(ld)
 
       # cut-in
-      cut_in_width = 2.6 #3.4  # 끼어들기 차폭
+      cut_in_width = 3.0 #3.4  # 끼어들기 차폭
       if abs(dy_with_vel) < cut_in_width / 2 and (3 < c.dRel < 20 and c.vLead > 4 and c.cnt > int(2.0/DT_MDL) and  dy * c.yvLead_filtered < 0):
         if not self.leadCutIn['status'] or c.dRel < self.leadCutIn['dRel']:
+          c.cut_in_count += 1
+        else:
+          c.cut_in_count = 0
+        if c.cut_in_count > int(1.0/DT_MDL):
           self.leadCutIn = c.get_RadarState(lead_msg.prob)
-
+      else:
+        c.cut_in_count = 0
+        
     self.radar_state.leadsLeft   = left_list
     self.radar_state.leadsRight  = right_list
     self.radar_state.leadsCenter = center_list
