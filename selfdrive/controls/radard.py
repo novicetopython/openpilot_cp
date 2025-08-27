@@ -519,12 +519,16 @@ class RadarD:
       return
 
     md_x, md_y = md.position.x, md.position.y
-
+    lane_xs = md.laneLines[1].x
+    left_ys = md.laneLines[1].y
+    right_ys = md.laneLines[2].y
+    
     left_list, right_list, center_list = [], [], []
 
     for c in tracks.values():
       dy = c.yRel_filtered + np.interp(c.dRel, md_x, md_y) # + c.yvLead_filtered * self.radar_lat_factor
       dy_with_vel = dy + c.yvLead_filtered * self.radar_lat_factor
+      y_with_vel = c.yRel_filtered + c.yvLead_filtered * self.radar_lat_factor
 
       # center
       if abs(dy) < lane_width / 2 * 0.8:
@@ -541,8 +545,11 @@ class RadarD:
         right_list.append(ld)
 
       # cut-in
-      cut_in_width = 3.0 #3.4  # 끼어들기 차폭
-      if abs(dy_with_vel) < cut_in_width / 2 and (3 < c.dRel < 20 and c.vLead > 4 and c.cnt > int(2.0/DT_MDL) and  dy * c.yvLead_filtered < 0):
+      #cut_in_width = 3.0 #3.4  # 끼어들기 차폭
+      left_y = np.interp(c.dRel, lane_xs, left_ys)
+      right_y = np.interp(c.dRel, lane_xs, right_ys)
+      if left_y < y_with_vel < right_y and (3 < c.dRel < 20 and c.vLead > 4 and c.cnt > int(2.0/DT_MDL) and  dy * c.yvLead_filtered < 0):
+      #if abs(dy_with_vel) < cut_in_width / 2 and (3 < c.dRel < 20 and c.vLead > 4 and c.cnt > int(2.0/DT_MDL) and  dy * c.yvLead_filtered < 0):
         if not self.leadCutIn['status'] or c.dRel < self.leadCutIn['dRel']:
           c.cut_in_count += 1
         else:
