@@ -518,6 +518,9 @@ class RadarD:
       return
 
     md_x, md_y = md.position.x, md.position.y
+    lane_xs = md.laneLines[1].x
+    left_ys = md.laneLines[1].y
+    right_ys = md.laneLines[2].y
 
     left_list, right_list, center_list = [], [], []
 
@@ -540,8 +543,9 @@ class RadarD:
         right_list.append(ld)
 
       # cut-in
-      cut_in_width = 2.6 #3.4  # 끼어들기 차폭
-      if abs(dy_with_vel) < cut_in_width / 2 and (3 < c.dRel < 20 and c.vLead > 4 and c.cnt > int(2.0/DT_MDL) and  dy * c.yvLead_filtered < 0):
+      left_y = np.interp(c.dRel, lane_xs, left_ys)
+      right_y = np.interp(c.dRel, lane_xs, right_ys)
+      if left_y < dy_with_vel < right_y and (3 < c.dRel < 20 and c.vLead > 4 and c.cnt > int(2.0/DT_MDL) and  dy * c.yvLead_filtered < 0):
         if not self.leadCutIn['status'] or c.dRel < self.leadCutIn['dRel']:
           self.leadCutIn = c.get_RadarState(lead_msg.prob)
 
