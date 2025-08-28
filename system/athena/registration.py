@@ -34,6 +34,7 @@ def register(show_spinner=False) -> str | None:
   params = Params()
 
 
+  return UNREGISTERED_DONGLE_ID
   #return UNREGISTERED_DONGLE_ID  # for c3lite, clone
   dongle_id: str | None = params.get("DongleId", encoding='utf8')
   if dongle_id is None and Path(Paths.persist_root()+"/comma/dongle_id").is_file():
